@@ -280,8 +280,11 @@ public class MultiPointOutputStream {
         final DownloadOutputStream outputStream = outputStreamMap.get(blockIndex);
         if (outputStream != null) {
             outputStream.close();
-            outputStreamMap.remove(blockIndex);
-            noSyncLengthMap.remove(blockIndex);
+            synchronized (noSyncLengthMap) {
+                // make sure the length of noSyncLengthMap is equal to outputStreamMap
+                outputStreamMap.remove(blockIndex);
+                noSyncLengthMap.remove(blockIndex);
+            }
             Util.d(TAG, "OutputStream close task[" + task.getId() + "] block[" + blockIndex + "]");
         }
     }
@@ -472,6 +475,9 @@ public class MultiPointOutputStream {
             }
             success = true;
         } catch (IOException ex) {
+            Util.w(TAG, "OutputStream flush and sync data to filesystem failed " + ex);
+            success = false;
+        } catch (Exception ex) {
             Util.w(TAG, "OutputStream flush and sync data to filesystem failed " + ex);
             success = false;
         }

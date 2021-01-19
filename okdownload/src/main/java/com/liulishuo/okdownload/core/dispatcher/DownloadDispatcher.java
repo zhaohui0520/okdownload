@@ -335,6 +335,27 @@ public class DownloadDispatcher {
         return null;
     }
 
+    @Nullable
+    public synchronized DownloadCall findSameCall(DownloadTask task) {
+        Util.d(TAG, "findSameCall: " + task.getId());
+        for (DownloadCall call : readyAsyncCalls) {
+            if (call.isCanceled()) continue;
+            if (call.equalsTask(task)) return call;
+        }
+
+        for (DownloadCall call : runningAsyncCalls) {
+            if (call.isCanceled()) continue;
+            if (call.equalsTask(task)) return call;
+        }
+
+        for (DownloadCall call : runningSyncCalls) {
+            if (call.isCanceled()) continue;
+            if (call.equalsTask(task)) return call;
+        }
+
+        return null;
+    }
+
     public synchronized boolean isRunning(DownloadTask task) {
         Util.d(TAG, "isRunning: " + task.getId());
         for (DownloadCall call : runningSyncCalls) {

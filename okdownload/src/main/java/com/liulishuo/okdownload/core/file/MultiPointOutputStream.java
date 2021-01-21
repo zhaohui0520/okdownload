@@ -38,7 +38,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -75,7 +77,7 @@ public class MultiPointOutputStream {
 
     volatile Future syncFuture;
     volatile Thread runSyncThread;
-    final SparseArray<Thread> parkedRunBlockThreadMap = new SparseArray<>();
+    final ConcurrentHashMap<Integer, Thread> parkedRunBlockThreadMap = new ConcurrentHashMap<>();
 
     @NonNull private final Runnable syncRunnable;
     private String path;
@@ -404,9 +406,8 @@ public class MultiPointOutputStream {
                 }
 
                 if (state.isNoMoreStream) {
-                    final int size = parkedRunBlockThreadMap.size();
-                    for (int i = 0; i < size; i++) {
-                        final Thread parkedThread = parkedRunBlockThreadMap.valueAt(i);
+                    for (Map.Entry<Integer, Thread> entry : parkedRunBlockThreadMap.entrySet()) {
+                        final Thread parkedThread = entry.getValue();
                         if (parkedThread != null) unparkThread(parkedThread);
                     }
                     parkedRunBlockThreadMap.clear();
